@@ -12,6 +12,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <Eigen/Eigen>
 #include <fusion.h>
+#include <monty.h>
 
 #include <iostream>
 #include <memory>
@@ -22,11 +23,15 @@ typedef Eigen::MatrixX4d PolyhedronH;
 typedef std::vector<PolyhedronV> PolyhedraV;
 typedef std::vector<PolyhedronH> PolyhedraH;
 
+using namespace mosek::fusion;
+using namespace monty;
+
 struct Config
 {
     std::string targetTopic;
     double zGoal;
     double maxVel;
+    double maxAcc;
     std::vector<double> mapBound;
     double potential_weight;
     double dilation_radius;
@@ -38,6 +43,7 @@ struct Config
         read_essential_param(nh_priv, "/TargetTopic", targetTopic);
         read_essential_param(nh_priv, "/ZGoal", zGoal);
         read_essential_param(nh_priv, "/MaxVel", maxVel);
+        read_essential_param(nh_priv, "/MaxAcc", maxAcc);
         read_essential_param(nh_priv, "/MapBound", mapBound);
         read_essential_param(nh_priv, "/PotentialWeight", potential_weight);
         read_essential_param(nh_priv, "/DilationRadius", dilation_radius);

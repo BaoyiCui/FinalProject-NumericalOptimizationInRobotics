@@ -4,11 +4,13 @@ TargetTopic: "/move_base_simple/goal"
 
 ZGoal: 1.0
 
-MaxVel: 2.0
+MaxVel: 3.0
 
-PotentialWeight: 10000.0
+MaxAcc: 3.0
 
-SmoothWeight: 10.0
+PotentialWeight: 50000.0
+
+SmoothWeight: 100.0
 
 TOPPResolution: 10
 

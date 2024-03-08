@@ -99,17 +99,14 @@ void GlobalPlanner::plan()
                 x(i + pt_mid_num),
                 x(i + 2 * pt_mid_num)));
 
-            std::cout
-                << "x: " << x(i)
-                << " y: " << x(i + pt_mid_num)
-                << " z: " << x(i + 2 * pt_mid_num) << std::endl;
+            // std::cout
+            //     << "x: " << x(i)
+            //     << " y: " << x(i + pt_mid_num)
+            //     << " z: " << x(i + 2 * pt_mid_num) << std::endl;
         }
         route.push_back(startGoal[1]);
         // get traj
-        std::cout << "get traj" << std::endl;
         updateTraj(x, T1);
-        std::cout << "get traj llllllllllllllllllllllllllll" << std::endl;
-
         // solve time optimal path parameterization
         solveTOPP(x);
     }
@@ -148,21 +145,17 @@ void GlobalPlanner::getTrajMat(const int N)
             Dd(i, i - 1) = 1.0;
         }
     }
-    // std::cout << "Dd inverse:\n"
-    //           << Dd << std::endl;
+
     Dd = Dd.inverse();
-    // std::cout << "Dd:\n"
-    //           << Dd << std::endl;
+
     temp_AD_1.block(1, 0, N - 1, N - 1) = Dd;
-    // std::cout << "temp AD 1\n"
-    //           << temp_AD_1 << std::endl;
+
     for (int i = 0; i < N - 1; i++)
     {
         temp_AD_2(i, i) = -1;
         temp_AD_2(i, i + 2) = 1;
     }
-    // std::cout << "temp AD 2\n"
-    //           << temp_AD_2 << std::endl;
+
     AD_ = 3 * temp_AD_1 * temp_AD_2;
     // end of AD_
 
@@ -176,10 +169,7 @@ void GlobalPlanner::getTrajMat(const int N)
         temp_Ac_2(i, i) = -2.0;
         temp_Ac_2(i, i + 1) = -1.0;
     }
-    // std::cout << "temp Ac 1\n"
-    //           << temp_Ac_1 << std::endl;
-    // std::cout << "temp Ac 2\n"
-    //           << temp_Ac_2 << std::endl;
+
     Ac_ = 3 * temp_Ac_1 + temp_Ac_2 * AD_;
     // end of Ac_
 
@@ -221,21 +211,94 @@ void GlobalPlanner::updateTraj(const Eigen::VectorXd &x, const Eigen::VectorXd &
 
 void GlobalPlanner::solveTOPP(const Eigen::VectorXd &x)
 {
+
     const int n = x.size();
     const int pt_mid_num = n / 3;
     const int piece_num = pt_mid_num + 1;
     const int K = piece_num * config.resolution;
+    const int res = config.resolution;
     // get mat
     Eigen::VectorXd s_ = Eigen::VectorXd::Zero(K + 1);
+    Eigen::VectorXd s_diff = Eigen::VectorXd::Zero(K);
     Eigen::VectorXd p_x_ = Eigen::VectorXd::Zero(K + 1);
     Eigen::VectorXd p_y_ = Eigen::VectorXd::Zero(K + 1);
     Eigen::VectorXd p_z_ = Eigen::VectorXd::Zero(K + 1);
+    Eigen::VectorXd v_x_ = Eigen::VectorXd::Zero(K + 1);
+    Eigen::VectorXd v_y_ = Eigen::VectorXd::Zero(K + 1);
+    Eigen::VectorXd v_z_ = Eigen::VectorXd::Zero(K + 1);
+    Eigen::VectorXd a_x_ = Eigen::VectorXd::Zero(K + 1);
+    Eigen::VectorXd a_y_ = Eigen::VectorXd::Zero(K + 1);
+    Eigen::VectorXd a_z_ = Eigen::VectorXd::Zero(K + 1);
+
+    s_(0) = 0.0;
+    p_x_(0) = traj.getPos(0.0)(0);
+    p_y_(0) = traj.getPos(0.0)(1);
+    p_z_(0) = traj.getPos(0.0)(2);
 
     for (int i = 0; i < piece_num; i++)
     {
-        for (int j = 1; j < config.resolution + 1; ++j)
+        for (int j = 1; j < res + 1; ++j)
         {
-            double t = (double)j / config.resolution;
+            double t = (double)j / res;
+            double t_prev = (double)(j - 1) / res;
+            s_(j + i * res) = s_(j + i * res - 1) + (traj.pieces[i].getPos(t) - traj.pieces[i].getPos(t_prev)).norm();
+            s_diff(j - 1 + i * res) = s_(j + i * res) - s_(j - 1 + i * res);
+            // position
+            p_x_(j + i * res) = traj.pieces[i].getPos(t)(0);
+            p_y_(j + i * res) = traj.pieces[i].getPos(t)(1);
+            p_z_(j + i * res) = traj.pieces[i].getPos(t)(2);
+            // velocity
+            v_x_(j + i * res) = traj.pieces[i].getVel(t)(0);
+            v_y_(j + i * res) = traj.pieces[i].getVel(t)(1);
+            v_z_(j + i * res) = traj.pieces[i].getVel(t)(2);
+            // acceleration
+            a_x_(j + i * res) = traj.pieces[i].getAcc(t)(0);
+            a_y_(j + i * res) = traj.pieces[i].getAcc(t)(1);
+            a_z_(j + i * res) = traj.pieces[i].getAcc(t)(2);
         }
     }
+    std::vector<double> s_diff_vec(s_diff.data(), s_diff.data() + s_diff.size());
+    // auto s_diff_ptr = ;
+    auto s_diff_ptr = Matrix::dense(K, 1, new_array_ptr(s_diff_vec));
+
+    // std::cout << "size: " << s_diff_ptr->numColumns() << " " << s_diff_ptr->numRows() << " K: " << K << std::endl;
+    auto M = new Model("SOCP Sequential");
+    auto _M = finally([&]()
+                      { M->dispose(); });
+    // set decision variables
+    auto a = M->variable("a", K, Domain::unbounded());
+    auto b = M->variable("b", K, Domain::unbounded());
+    auto c = M->variable("c", K, Domain::unbounded());
+    auto d = M->variable("d", K, Domain::unbounded());
+    // set objective function
+    auto objective = Expr::dot(s_diff_ptr, d);
+    M->objective(ObjectiveSense::Minimize, objective);
+
+    std::cout << "add conic constraints" << std::endl;
+    // add conic constraints
+    for (int k = 0; k < K; k++)
+    {
+    }
+
+    // add linear inequality constraints
+    std::cout << "add linear inequality constraints" << std::endl;
+    for (int k = 0; k < K; k++)
+    {
+
+        M->constraint(b->index(k), Domain::greaterThan(0.0));
+    }
+    // add linear equality constraints
+    std::cout << "add linear equality constraints" << std::endl;
+    for (int k = 0; k < K - 1; k++)
+    {
+        auto r_temp = Expr::mul(2.0, a->index(k));         // 2 * a_k
+        auto r = Expr::mul(s_diff_ptr->get(k, 0), r_temp); // 2 * (s_{k+1} - s_{k}) * a_k
+        auto l = Expr::sub(b->index(k + 1), b->index(k));  // b_{k+1} - b_k
+        M->constraint(Expr::sub(l, r), Domain::equalsTo(0.0));
+    }
+
+    // solve SOCP
+    std::cout << "solve SOCP" << std::endl;
+    M->solve();
+    // plot
 }
