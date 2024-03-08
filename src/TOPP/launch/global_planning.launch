@@ -1,0 +1,10 @@
+<launch>
+    <rosparam file="$(find TOPP)/config/global_planning.yaml" command="load" />
+
+    <node name="rviz" pkg="rviz" type="rviz" output="screen"
+        args="-d $(find TOPP)/config/global_planning.rviz">
+    </node>
+
+    <node pkg="TOPP" type="global_planner_node" name="global_planner_node" output="screen">
+    </node>
+</launch>

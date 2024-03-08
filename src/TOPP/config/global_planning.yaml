@@ -1,0 +1,29 @@
+MapTopic: "/poly_map"
+
+TargetTopic: "/move_base_simple/goal"
+
+ZGoal: 1.0
+
+MaxVel: 2.0
+
+PotentialWeight: 10000.0
+
+SmoothWeight: 10.0
+
+TOPPResolution: 10
+
+# Map Parameters
+MapBound: [-25.0, 25.0, -25.0, 25.0, 0.0, 5.0]
+
+ObsVisHeight: 3.0
+
+MinEdgeNum: 4
+
+MaxEdgeNum: 7
+
+ObsNum: 20
+
+MaxDistCV: 5.0 # max distance between vertex of obstacle and center of obstacle
+
+DilationRadius: 1.5
+
