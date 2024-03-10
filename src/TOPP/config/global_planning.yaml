@@ -16,8 +16,6 @@ SmoothWeight: 100.0
 
 TOPPResolution: 10
 
-TOPPPlotPath: "/home/star/Desktop/mr_ws/homeworks/finalProj_ws/pic"
-
 # Map Parameters
 MapBound: [-25.0, 25.0, -25.0, 25.0, 0.0, 5.0]
 
