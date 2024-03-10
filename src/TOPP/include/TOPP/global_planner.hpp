@@ -31,6 +31,7 @@ using namespace monty;
 struct Config
 {
     std::string targetTopic;
+    std::string toppPlotPath;
     double zGoal;
     double maxVel;
     double maxAcc;
@@ -53,6 +54,7 @@ struct Config
         read_essential_param(nh_priv, "/DilationRadius", dilation_radius);
         read_essential_param(nh_priv, "/SmoothWeight", smooth_weight);
         read_essential_param(nh_priv, "/TOPPResolution", resolution);
+        read_essential_param(nh_priv, "/TOPPPlotPath", toppPlotPath);
     }
 };
 
@@ -78,17 +80,8 @@ private:
     Trajectory<3> traj;
     double trajStamp;
 
-    std::thread plotThread;
-
     void getTrajMat(const int N);
-    inline void plotTOPPSol()
-    {
-        namespace plt = matplotlibcpp;
-        while(true)
-        {
-            plt::show();
-        }
-    }
+
 
     static double costFunction(void *instance, const Eigen::VectorXd &x, Eigen::VectorXd &g)
     {

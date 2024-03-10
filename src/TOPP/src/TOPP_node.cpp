@@ -12,7 +12,7 @@ int main(int argc, char **argv)
         MapConfig(ros::NodeHandle("~")),
         nh_);
 
-    ros::Rate lr(100);
+    ros::Rate lr(10);
     while (ros::ok())
     {
         global_planner.process();

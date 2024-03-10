@@ -15,10 +15,7 @@ GlobalPlanner::GlobalPlanner(const Config &conf,
                              ros::TransportHints().tcpNoDelay());
 
     map_generator.generateObs();
-
-    // plt::figure();
-
-    // plotThread = std::thread(&GlobalPlanner::plotTOPPSol, this);
+    plt::ion();
 }
 
 void GlobalPlanner::targetCallBack(const geometry_msgs::PoseStamped::ConstPtr &msg)
@@ -125,7 +122,6 @@ void GlobalPlanner::process()
 
     visualizer.visualizePolytope(vPolys);
     visualizer.visualize(traj, route);
-
 }
 
 // private function
@@ -429,7 +425,9 @@ void GlobalPlanner::solveTOPP(const Eigen::VectorXd &x)
         n_max_v_vec.push_back(-config.maxVel);
     }
 
-    plt::clf();
+    plt::close();
+    plt::figure();
+    // plt::figure_size(900, 300);
     plt::title("TOPP SOLUTION");
 
     plt::subplot(3, 1, 1);
@@ -456,8 +454,7 @@ void GlobalPlanner::solveTOPP(const Eigen::VectorXd &x)
     plt::legend();
     plt::grid(true);
 
-    // plt::pause(0.01);
-    plt::save("/home/star/Desktop/mr_ws/homeworks/finalProj_ws/pic/TOPP.png", 900);
-
+    plt::show();
+    plt::pause(0.01);
     return;
 }
