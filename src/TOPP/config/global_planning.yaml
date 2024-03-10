@@ -4,9 +4,11 @@ TargetTopic: "/move_base_simple/goal"
 
 ZGoal: 1.0
 
-MaxVel: 3.0
+MaxVel: 5.0
 
-MaxAcc: 3.0
+MaxAcc: 10.0
+
+InitStep: 3.0   # initial step between near control points
 
 PotentialWeight: 50000.0
 

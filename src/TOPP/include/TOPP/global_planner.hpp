@@ -15,6 +15,8 @@
 #include <monty.h>
 
 #include <iostream>
+#include <string>
+#include <thread>
 #include <memory>
 #include <vector>
 
@@ -32,6 +34,7 @@ struct Config
     double zGoal;
     double maxVel;
     double maxAcc;
+    double initStep;
     std::vector<double> mapBound;
     double potential_weight;
     double dilation_radius;
@@ -44,6 +47,7 @@ struct Config
         read_essential_param(nh_priv, "/ZGoal", zGoal);
         read_essential_param(nh_priv, "/MaxVel", maxVel);
         read_essential_param(nh_priv, "/MaxAcc", maxAcc);
+        read_essential_param(nh_priv, "/InitStep", initStep);
         read_essential_param(nh_priv, "/MapBound", mapBound);
         read_essential_param(nh_priv, "/PotentialWeight", potential_weight);
         read_essential_param(nh_priv, "/DilationRadius", dilation_radius);
@@ -74,8 +78,18 @@ private:
     Trajectory<3> traj;
     double trajStamp;
 
-    // void getTrajectory(Trajectory<3> &traj, const std::vector<Eigen::Matrix<double, 3, 4>> &coeffMats, const Eigen::VectorXd &T1);
+    std::thread plotThread;
+
     void getTrajMat(const int N);
+    inline void plotTOPPSol()
+    {
+        namespace plt = matplotlibcpp;
+        while(true)
+        {
+            plt::show();
+        }
+    }
+
     static double costFunction(void *instance, const Eigen::VectorXd &x, Eigen::VectorXd &g)
     {
         GlobalPlanner &obj = *(GlobalPlanner *)instance;
