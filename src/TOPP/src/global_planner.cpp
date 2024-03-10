@@ -455,6 +455,6 @@ void GlobalPlanner::solveTOPP(const Eigen::VectorXd &x)
     plt::grid(true);
 
     plt::show();
-    plt::pause(0.01);
+    plt::pause(0.005);
     return;
 }
