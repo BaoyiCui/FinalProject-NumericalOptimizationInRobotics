@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(TOPP)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++14)
+add_compile_options(-std=c++14)
 
 set(MOSEK_DIR "/home/star/mosek/10.1")
 set(MOSEK_LIBRARIES ${MOSEK_DIR}/tools/platform/linux64x86/bin)
